@@ -94,6 +94,28 @@ make test        # or: pytest
 Covers: idempotent replay, anti-join correctness, at-least-once (dupes ok, no loss),
 cross-tenant isolation, retention floor never skipping a live event, `/last` neutrality.
 
+## Deploy to Railway
+
+The app is a single Dockerfile service plus a Postgres database — Railway builds and
+runs it with almost no config. `railway.json` pins the Dockerfile build, a `/healthz`
+healthcheck, and a restart policy.
+
+1. **New Project → Deploy from GitHub repo** and pick this repo. Railway detects the
+   Dockerfile and `railway.json` automatically.
+2. **Add a database:** in the project, **New → Database → PostgreSQL**. Railway provisions
+   it and exposes a `DATABASE_URL`.
+3. **Wire it up:** on the API service, add a variable `DATABASE_URL` set to
+   `${{Postgres.DATABASE_URL}}` (the reference picker does this in one click). That single
+   variable is the only wiring needed — its presence switches the app from the in-memory
+   backend to Postgres; the app applies the schema migration and seeds the demo customers
+   on boot, so there are no init scripts or release commands to run.
+4. **Networking:** Railway injects `$PORT`; the container binds it (falling back to `8000`
+   locally). Click **Generate Domain** to get a public URL.
+
+That's it — hit `https://<your-app>.up.railway.app/healthz`, then drive it with the demo
+keys exactly as in the Quickstart. (The PRD's AWS ECS/RDS path in `docs/PRD.md` §12 remains
+the documented alternative.)
+
 ## Production notes (documented, not built in v1)
 
 Deliberately scoped out and written up rather than implemented — see `decision.md` for the
