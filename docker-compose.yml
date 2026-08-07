@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: triggers
+      POSTGRES_PASSWORD: triggers
+      POSTGRES_DB: triggers
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U triggers -d triggers"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    environment:
+      # Presence of DATABASE_URL selects the Postgres backend.
+      DATABASE_URL: postgresql://triggers:triggers@db:5432/triggers
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
