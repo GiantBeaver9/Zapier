@@ -1,0 +1,11 @@
+[project]
+name = "triggersapi"
+version = "1.0.0"
+description = "Public event ingress + per-customer pull inbox (the reacting half of an automation platform)."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+# Run the suite from the repo root; make `app` and `tests` importable.
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
