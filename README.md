@@ -94,6 +94,14 @@ make test        # or: pytest
 Covers: idempotent replay, anti-join correctness, at-least-once (dupes ok, no loss),
 cross-tenant isolation, retention floor never skipping a live event, `/last` neutrality.
 
+To test a **running** instance (e.g. your Railway URL) end to end:
+
+```bash
+make smoke BASE=https://<your-app>.up.railway.app   # or: bash scripts/smoke.sh <url>
+```
+
+Full testing guide (one-command, interactive `/docs`, and raw curl): [`TESTING.md`](TESTING.md).
+
 ## Deploy to Railway
 
 The app is a single Dockerfile service plus a Postgres database — Railway builds and

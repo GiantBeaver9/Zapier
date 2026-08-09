@@ -5,7 +5,7 @@ BASE ?= http://localhost:8000
 KEY_A ?= demo-key-a
 KEY_B ?= demo-key-b
 
-.PHONY: help up down logs test client-a produce-a produce-b inbox-a inbox-b last-a
+.PHONY: help up down logs test smoke client-a produce-a produce-b inbox-a inbox-b last-a
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -22,6 +22,9 @@ logs: ## Tail the API logs
 
 test: ## Run the pytest suite (in-memory, no DB needed)
 	pytest
+
+smoke: ## End-to-end smoke test against a running instance (BASE=<url>)
+	bash scripts/smoke.sh $(BASE)
 
 client-a: ## Run the example client end-to-end as cust_a
 	python client/example.py --base $(BASE) --key $(KEY_A)
