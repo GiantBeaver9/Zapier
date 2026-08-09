@@ -38,6 +38,33 @@ class Settings:
     demo_customers: list[tuple[str, str]] = field(default_factory=lambda: list(DEMO_CUSTOMERS))
 
 
+def parse_seed_customers(raw: str | None) -> list[tuple[str, str]]:
+    """Parse ``SEED_CUSTOMERS`` -- a comma-separated list of ``id:api_key`` pairs
+    (e.g. ``cust_c:key-c,cust_d:key-d``). Blank/malformed entries are skipped.
+
+    Lets you add tenants at deploy time (set the env var + redeploy) without a
+    code change; they're upserted alongside the built-in demo customers.
+    """
+    if not raw:
+        return []
+    pairs: list[tuple[str, str]] = []
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if not entry or ":" not in entry:
+            continue
+        customer_id, api_key = entry.split(":", 1)
+        customer_id, api_key = customer_id.strip(), api_key.strip()
+        if customer_id and api_key:
+            pairs.append((customer_id, api_key))
+    return pairs
+
+
 def load_settings() -> Settings:
     """Build Settings from the environment. Called once at startup."""
-    return Settings(database_url=os.getenv("DATABASE_URL") or None)
+    extra = parse_seed_customers(os.getenv("SEED_CUSTOMERS"))
+    # Later entries win on api_key collisions; keep demo customers first.
+    customers = list(DEMO_CUSTOMERS) + [c for c in extra if c not in DEMO_CUSTOMERS]
+    return Settings(
+        database_url=os.getenv("DATABASE_URL") or None,
+        demo_customers=customers,
+    )

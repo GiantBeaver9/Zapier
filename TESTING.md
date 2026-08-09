@@ -64,6 +64,34 @@ curl -s $BASE/v1/inbox -H "Authorization: Bearer demo-key-b"
 | `GET /v1/inbox` with `demo-key-b` | empty — cross-tenant isolation |
 | `GET /v1/inbox` with no key | `401` |
 
+## Bulk load + verify by id
+
+```bash
+bash scripts/load.sh https://<your-app>.up.railway.app 20    # or: make load BASE=<url> N=20
+```
+
+Produces 20 events and looks each one up by id via `GET /v1/events/{id}`, printing
+`stored: 20/20` and `verified: 20/20`. Set `KEY=demo-key-b` to run as the other tenant.
+
+Single lookup by hand:
+
+```bash
+curl -s $BASE/v1/events/<event_id> -H "Authorization: Bearer demo-key-a"
+# 200 with the event, or 404 if this customer has no such id
+```
+
+## Seeding extra customers
+
+The two demo customers are always seeded. To add more, set `SEED_CUSTOMERS` (comma-separated
+`id:api_key` pairs) and restart/redeploy:
+
+```bash
+SEED_CUSTOMERS="cust_c:key-c,cust_d:key-d"
+# on Railway: API service -> Variables -> add it, which triggers a redeploy
+```
+
+Then those keys work exactly like the demo keys.
+
 ## Notes
 
 - **In-memory vs Postgres:** `/healthz` returns `ok` either way. If you set

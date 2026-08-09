@@ -119,6 +119,23 @@ def read_inbox(
     )
 
 
+@app.get("/v1/events/{event_id}", response_model=EventOut)
+def get_event(
+    event_id: str,
+    customer: Customer = Depends(require_customer),
+) -> EventOut:
+    """Look up a single event by id for the authenticated customer. Read-only —
+    does not touch delivery state. `404` if this customer has no such event
+    (cross-tenant lookups are structurally impossible: the id is scoped to the
+    caller's derived customer_id)."""
+    from fastapi import HTTPException
+
+    event = _store(app).get_event(customer_id=customer.customer_id, event_id=event_id)
+    if event is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="event not found")
+    return EventOut.of(event)
+
+
 @app.get("/v1/last", response_model=LastResponse)
 def read_last(
     customer: Customer = Depends(require_customer),

@@ -5,7 +5,7 @@ BASE ?= http://localhost:8000
 KEY_A ?= demo-key-a
 KEY_B ?= demo-key-b
 
-.PHONY: help up down logs test smoke client-a produce-a produce-b inbox-a inbox-b last-a
+.PHONY: help up down logs test smoke load client-a produce-a produce-b inbox-a inbox-b last-a
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -25,6 +25,10 @@ test: ## Run the pytest suite (in-memory, no DB needed)
 
 smoke: ## End-to-end smoke test against a running instance (BASE=<url>)
 	bash scripts/smoke.sh $(BASE)
+
+N ?= 20
+load: ## Produce N events (default 20) and verify each by id (BASE=<url> N=20)
+	bash scripts/load.sh $(BASE) $(N)
 
 client-a: ## Run the example client end-to-end as cust_a
 	python client/example.py --base $(BASE) --key $(KEY_A)
