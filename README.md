@@ -64,8 +64,27 @@ Base path `/v1`. Auth: `Authorization: Bearer <api_key>`.
 |---|---|---|
 | `POST` | `/v1/events` | Ingest an event (idempotent on `event_id`). `201` new / `200` deduped. |
 | `GET`  | `/v1/inbox?limit=200` | Undelivered events (≤200), marks them read, returns `unread_remaining`. |
+| `GET`  | `/v1/events/{event_id}` | Look up one event by id (read-only, scoped to your key). `404` if absent. |
 | `GET`  | `/v1/last?num=50` | Most-recent N events, read-only peek (does **not** mark read). |
 | `GET`  | `/healthz` | Liveness. |
+
+### Seeding extra customers
+
+Beyond the two built-in demo customers, set `SEED_CUSTOMERS` to a comma-separated list of
+`id:api_key` pairs and they're upserted on startup — no code change:
+
+```bash
+SEED_CUSTOMERS="cust_c:key-c,cust_d:key-d"    # on Railway: add as a service variable, redeploy
+```
+
+### Load / verify helper
+
+```bash
+make load BASE=https://<your-app>.up.railway.app N=20   # or: bash scripts/load.sh <url> 20
+```
+
+Produces N events and confirms every one via `GET /v1/events/{id}` — prints `stored: N/N`,
+`verified: N/N`.
 
 Full request/response shapes and the SQL behind each route: [`docs/PRD.md`](docs/PRD.md) §5.
 

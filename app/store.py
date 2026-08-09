@@ -92,6 +92,12 @@ class EventStore(ABC):
     @abstractmethod
     def read_last(self, customer_id: str, num: int) -> list[Event]: ...
 
+    @abstractmethod
+    def get_event(self, customer_id: str, event_id: str) -> Event | None:
+        """Fetch a single event by id for this customer. Read-only lookup --
+        does not touch delivery state (like /last). Returns None if absent."""
+        ...
+
     # --- retention ------------------------------------------------------- #
     @abstractmethod
     def archive_expired(self, now: datetime | None = None) -> ArchiveResult: ...
@@ -205,6 +211,9 @@ class InMemoryEventStore(EventStore):
             rows = [e for (cid, _eid), e in self._events.items() if cid == customer_id]
         rows.sort(key=lambda e: (e.created_at, e.event_id), reverse=True)
         return rows[:num]
+
+    def get_event(self, customer_id: str, event_id: str) -> Event | None:
+        return self._events.get((customer_id, event_id))
 
     def archive_expired(self, now: datetime | None = None) -> ArchiveResult:
         now = now or _utcnow()
@@ -381,6 +390,19 @@ class PostgresEventStore(EventStore):
                 (customer_id, num),
             ).fetchall()
         return [Event(customer_id, r[0], r[1], r[2], r[3]) for r in rows]
+
+    def get_event(self, customer_id: str, event_id: str) -> Event | None:
+        with self._pool.connection() as conn:
+            row = conn.execute(
+                """
+                SELECT event_id, event_type, payload, created_at
+                FROM events WHERE customer_id = %s AND event_id = %s
+                """,
+                (customer_id, event_id),
+            ).fetchone()
+        if row is None:
+            return None
+        return Event(customer_id, row[0], row[1], row[2], row[3])
 
     def archive_expired(self, now: datetime | None = None) -> ArchiveResult:
         now = now or _utcnow()
